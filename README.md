@@ -69,3 +69,17 @@ This script checks the login via active ProxyIdP machine
         <pre>
         ./proxy_idp_auth_test_active.sh "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd"
         </pre>
+
+### mariadb_replication_check.sh
+This script checks the database replication
+
+* How to run this script:
+    * Params:
+        * 1 - Login used for connection to the database
+        * 2 - Password used for connection to the database (the password has to be in quotes)
+        * 3 - List of addresses separated by space (the list has to be in quotes)
+    * Example:
+        <pre>
+        ./mariadb_replication_check.sh "USER" "PASSWORD" "Address1 Address2 Address3"
+        </pre>
+        
