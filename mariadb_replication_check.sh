@@ -1,7 +1,7 @@
 #!/bin/bash
 
-USER="Nagios"
-PASSWD="]pS+0#zbdMUpD7-r>C"
+USER=""
+PASSWD=""
 # Addresses in quotes separated by spaces ("add1" "add2" "add3")
 machines=()
 machinesCount=${#machines[*]}
