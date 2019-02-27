@@ -18,6 +18,11 @@ services=""
 </pre>
 
 ### proxy_idp_auth_test.sh
+* Requirements:
+    * library *bc* 
+        <pre>
+        apt-get install bc
+        </pre>
 * Attributes to be filled:
 <pre>
 # The url of tested SP
