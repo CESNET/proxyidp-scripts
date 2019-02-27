@@ -40,4 +40,4 @@ instanceName=""
 </pre>
 
 ## List of plugins
-Local scripts are located in /usr/lib/check_mk/plugins/ 
+Plugins are located in /usr/lib/check_mk/plugins/ 
