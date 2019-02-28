@@ -18,6 +18,8 @@ services=""
 </pre>
 
 ### proxy_idp_auth_test.sh
+This script checks the login to SP via the host, from which is the script runs
+
 * Requirements:
     * library *bc* 
         <pre>
@@ -42,6 +44,10 @@ password=""
 # Fill in the instance name
 # Instance name must not contain a space
 instanceName=""
+
+# Fill in the global domain name of ProxyIdP
+# For example: login.cesnet.cz
+proxyDomainName="login.elixir-czech.org"
 </pre>
 
 ## List of plugins

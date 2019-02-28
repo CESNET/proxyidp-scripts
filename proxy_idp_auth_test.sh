@@ -23,8 +23,15 @@ password=""
 # Instance name must not contain a space
 instanceName=""
 
+# Fill in the global domain name of ProxyIdP
+# For example: login.cesnet.cz
+proxyDomainName=""
+
 # How long is normal for total roundtrip (seconds)
-warningTime=5
+warningTime=10
+
+## Get host IP
+ip=($(hostname -I))
 
 # End function
 end()
@@ -46,7 +53,7 @@ if [[ $status -eq 0 &&  $totalTime -gt $(( $warningTime * 1000000000 )) ]]; then
     statustxt="Successful login, but was too long."
 fi
 
-echo "$status proxy_idp_auth_test-$instanceName login_time=$timeStat $statustxt"
+echo "$status $basename-$instanceName login_time=$timeStat $statustxt"
 exit 0
 }
 
@@ -55,7 +62,7 @@ cookieJar=$(mktemp /tmp/${basename}.XXXXXX) || exit 3
 startTime=$(date +%s%N)
 
 # REQUEST #1: fetch URL for authentication page
-html=$(curl -L -sS -c ${cookieJar} -w 'LAST_URL:%{url_effective}' ${testSite}) || end 2 "Failed to fetch URL: $testSite"
+html=$(curl -L -sS -c ${cookieJar} -w 'LAST_URL:%{url_effective}' --resolve ${proxyDomainName}':443:'${ip} ${testSite}) || end 2 "Failed to fetch URL: $testSite"
 
 # Parse HTML to get the URL where to POST login (written out by curl itself above)
 authURL=$(echo ${html} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
@@ -68,7 +75,7 @@ fi
 
 # REQUEST #2: log in
 html=$(curl -L -sS -c ${cookieJar} -b ${cookieJar} -w 'LAST_URL:%{url_effective}' \
--d "j_username=$login" -d  "j_password=$password" --data-urlencode "AuthState=${authState}" ${authURL}) || end 2 "Failed to fetch URL: $authURL"
+-d "j_username=$login" -d  "j_password=$password" --data-urlencode "AuthState=${authState}" --resolve ${proxyDomainName}':443:'${ip} ${authURL}) || end 2 "Failed to fetch URL: $authURL"
 
 lastURL=$(echo ${html} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
 
@@ -83,7 +90,7 @@ proxySamlResponse=$(echo ${html} | sed -e 's/.*hidden[^>]*SAMLResponse[^>]*value
 
 # REQUEST #3: post the SAMLResponse to proxy
 html=$(curl -L -sS -c ${cookieJar} -b ${cookieJar} -w 'LAST_URL:%{url_effective}' \
-  --data-urlencode "SAMLResponse=${proxySamlResponse}" ${proxySamlEndpoint}) || end 2 "Failed to fetch URL: $proxySamlEndpoint"
+  --data-urlencode "SAMLResponse=${proxySamlResponse}" --resolve ${proxyDomainName}':443:'${ip} ${proxySamlEndpoint}) || end 2 "Failed to fetch URL: $proxySamlEndpoint"
 
 # We do not support JS, so parse HTML for SAML endpoint and response
 spSamlEndpoint=$(echo ${html} | sed -e 's/.*form[^>]*action=[\"'\'']\([^\"'\'']*\)[\"'\''].*method[^>].*/\1/')
@@ -91,7 +98,7 @@ spSamlResponse=$(echo ${html} | sed -e 's/.*hidden[^>]*SAMLResponse[^>]*value=[\
 
 # REQUEST #4: post the SAMLResponse to SP
 html=$(curl -L -sS -c ${cookieJar} -b ${cookieJar} -w 'LAST_URL:%{url_effective}' \
-  --data-urlencode "SAMLResponse=${spSamlResponse}" ${spSamlEndpoint}) || end 2 "Failed to fetch URL: $spSamlEndpoint"
+  --data-urlencode "SAMLResponse=${spSamlResponse}" --resolve ${proxyDomainName}':443:'${ip} ${spSamlEndpoint}) || end 2 "Failed to fetch URL: $spSamlEndpoint"
 
 lastURL=$(echo ${html} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
 
