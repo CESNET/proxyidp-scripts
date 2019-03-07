@@ -18,7 +18,13 @@ login=$3
 password=$4
 
 # How long is normal for total roundtrip (seconds)
-warningTime=10
+# Default value is 10
+if [[ $# -eq 5 ]]; then
+    warningTime=$5
+else
+    warningTime=10
+fi
+
 
 # End function
 end()
@@ -37,10 +43,10 @@ timeStat=$(echo "scale=4;$totalTime / 1000000000" | bc -l)
 # If OK, but time > 5s s, set to WARNING
 if [[ $status -eq 0 &&  $totalTime -gt $(( $warningTime * 1000000000 )) ]]; then
     status=1
-    statustxt="WARN - Successful login, but was too long."
+    statustxt="WARN - Successful login, but was too long. Login time: ${timeStat}s. Warning time: ${warningTime}s."
 fi
 
-echo $statustxt
+echo "$statustxt Login time: ${timeStat}s."
 exit $status
 }
 
@@ -92,7 +98,7 @@ lastURL=$(echo ${html} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
 if [[ $lastURL ==  $testSite ]]; then
     result=$(echo ${html} | sed -e 's/.*<body>\s*Result-\(.*\)<.*$/\1/')
     if [[ $result == "OK " ]]; then
-        end 0 "OK - Successful login"
+        end 0 "OK - Successful login."
     else
         end 2 "CRIT - Bad result: $result."
     fi

@@ -56,7 +56,7 @@ Plugins are located in /usr/lib/check_mk/plugins/
 ## Nagios active scripts
 Active scripts are located in Nagios machine
 
-### proxy_idp_auth_test_nagios.sh
+### proxy_idp_auth_test_active.sh
 This script checks the login via active ProxyIdP machine
 
 * How to run this script:
@@ -65,9 +65,11 @@ This script checks the login via active ProxyIdP machine
         * 2 - The url of login form of used IdP
         * 3 - Login
         * 4 - Password
+        * 5 - Roundtrip time (in seconds)
+            - Default value = 10
     * Example:
         <pre>
-        ./proxy_idp_auth_test_active.sh "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd"
+        ./proxy_idp_auth_test_active.sh "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" 10
         </pre>
 
 ### mariadb_replication_check.sh
