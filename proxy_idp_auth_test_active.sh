@@ -17,14 +17,6 @@ login=$3
 # Password
 password=$4
 
-# How long is normal for total roundtrip (seconds)
-# Default value is 10
-if [[ $# -eq 5 ]]; then
-    warningTime=$5
-else
-    warningTime=10
-fi
-
 
 # End function
 end()
@@ -35,24 +27,11 @@ statustxt=$2
 # Clean up
 rm -f ${cookieJar}
 
-# Calculate time difference
-endTime=$(date +%s%N)
-totalTime=$(expr $endTime - $startTime)
-timeStat=$(echo "scale=4;$totalTime / 1000000000" | bc -l)
-
-# If OK, but time > 5s s, set to WARNING
-if [[ $status -eq 0 &&  $totalTime -gt $(( $warningTime * 1000000000 )) ]]; then
-    status=1
-    statustxt="WARN - Successful login, but was too long. Login time: ${timeStat}s. Warning time: ${warningTime}s."
-fi
-
-echo "$statustxt Login time: ${timeStat}s."
+echo "$statustxt"
 exit $status
 }
 
 cookieJar=$(mktemp /tmp/${basename}.XXXXXX) || exit 3
-
-startTime=$(date +%s%N)
 
 # REQUEST #1: fetch URL for authentication page
 html=$(curl -L -sS -c ${cookieJar} -w 'LAST_URL:%{url_effective}' ${testSite}) || end 2 "CRIT - Failed to fetch URL: $testSite"
