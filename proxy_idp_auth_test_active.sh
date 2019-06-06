@@ -31,6 +31,15 @@ echo "$statustxt"
 exit $status
 }
 
+hasErrorReportForm()
+{
+if [[ $@ == *errorreport.php* ]]; then
+    errorMessage=$(echo ${html} | sed -e 's/.*<h1>.*<\/i>\s\(.*\)\s<\/a><\/h1>.*id="content">\s<p>\s\(.*\)<a.*moreInfo.*/\1 - \2/')
+    end 2 "Get error: ${errorMessage} "
+fi
+
+}
+
 cookieJar=$(mktemp /tmp/${basename}.XXXXXX) || exit 3
 
 # REQUEST #1: fetch URL for authentication page
@@ -63,6 +72,8 @@ proxySamlResponse=$(echo ${html} | sed -e 's/.*hidden[^>]*SAMLResponse[^>]*value
 # REQUEST #3: post the SAMLResponse to proxy
 html=$(curl -L -sS -c ${cookieJar} -b ${cookieJar} -w 'LAST_URL:%{url_effective}' \
   --data-urlencode "SAMLResponse=${proxySamlResponse}" ${proxySamlEndpoint}) || end 2 "CRIT - Failed to fetch URL: $proxySamlEndpoint"
+
+hasErrorReportForm ${html}
 
 # We do not support JS, so parse HTML for SAML endpoint and response
 spSamlEndpoint=$(echo ${html} | sed -e 's/.*form[^>]*action=[\"'\'']\([^\"'\'']*\)[\"'\''].*method[^>].*/\1/')
