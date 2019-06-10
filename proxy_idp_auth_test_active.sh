@@ -17,14 +17,6 @@ login=$3
 # Password
 password=$4
 
-# How long is normal for total roundtrip (seconds)
-# Default value is 10
-if [[ $# -eq 5 ]]; then
-    warningTime=$5
-else
-    warningTime=10
-fi
-
 
 # End function
 end()
@@ -35,24 +27,20 @@ statustxt=$2
 # Clean up
 rm -f ${cookieJar}
 
-# Calculate time difference
-endTime=$(date +%s%N)
-totalTime=$(expr $endTime - $startTime)
-timeStat=$(echo "scale=4;$totalTime / 1000000000" | bc -l)
-
-# If OK, but time > 5s s, set to WARNING
-if [[ $status -eq 0 &&  $totalTime -gt $(( $warningTime * 1000000000 )) ]]; then
-    status=1
-    statustxt="WARN - Successful login, but was too long. Login time: ${timeStat}s. Warning time: ${warningTime}s."
-fi
-
-echo "$statustxt Login time: ${timeStat}s."
+echo "$statustxt"
 exit $status
 }
 
-cookieJar=$(mktemp /tmp/${basename}.XXXXXX) || exit 3
+hasErrorReportForm()
+{
+if [[ $@ == *errorreport.php* ]]; then
+    errorMessage=$(echo ${html} | sed -e 's/.*<h1>.*<\/i>\s\(.*\)\s<\/a><\/h1>.*id="content">\s<p>\s\(.*\)<a.*moreInfo.*/\1 - \2/')
+    end 2 "Get error: ${errorMessage} "
+fi
 
-startTime=$(date +%s%N)
+}
+
+cookieJar=$(mktemp /tmp/${basename}.XXXXXX) || exit 3
 
 # REQUEST #1: fetch URL for authentication page
 html=$(curl -L -sS -c ${cookieJar} -w 'LAST_URL:%{url_effective}' ${testSite}) || end 2 "CRIT - Failed to fetch URL: $testSite"
@@ -84,6 +72,8 @@ proxySamlResponse=$(echo ${html} | sed -e 's/.*hidden[^>]*SAMLResponse[^>]*value
 # REQUEST #3: post the SAMLResponse to proxy
 html=$(curl -L -sS -c ${cookieJar} -b ${cookieJar} -w 'LAST_URL:%{url_effective}' \
   --data-urlencode "SAMLResponse=${proxySamlResponse}" ${proxySamlEndpoint}) || end 2 "CRIT - Failed to fetch URL: $proxySamlEndpoint"
+
+hasErrorReportForm ${html}
 
 # We do not support JS, so parse HTML for SAML endpoint and response
 spSamlEndpoint=$(echo ${html} | sed -e 's/.*form[^>]*action=[\"'\'']\([^\"'\'']*\)[\"'\''].*method[^>].*/\1/')

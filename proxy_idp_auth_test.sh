@@ -27,6 +27,9 @@ instanceName=""
 # For example: login.cesnet.cz
 proxyDomainName=""
 
+# The url for post error report
+proxyErrorReportSite=https://${proxyDomainName}/proxy/errorreport.php
+
 # How long is normal for total roundtrip (seconds)
 warningTime=10
 
@@ -55,6 +58,16 @@ fi
 
 echo "$status $basename-$instanceName login_time=$timeStat $statustxt"
 exit 0
+}
+
+
+hasErrorReportForm()
+{
+if [[ $@ == *${proxyErrorReportSite}* ]]; then
+    errorMessage=$(echo ${html} | sed -e 's/.*<h1>.*<\/i>\s\(.*\)\s<\/a><\/h1>.*id="content">\s<p>\s\(.*\)<a.*moreInfo.*/\1 - \2/')
+    end 2 "Get error: ${errorMessage} "
+fi
+
 }
 
 cookieJar=$(mktemp /tmp/${basename}.XXXXXX) || exit 3
@@ -88,13 +101,17 @@ fi
 proxySamlEndpoint=$(echo ${html} | sed -e 's/.*form[^>]*action=[\"'\'']\([^\"'\'']*\)[\"'\''].*method[^>].*/\1/' | php -R 'echo html_entity_decode($argn);')
 proxySamlResponse=$(echo ${html} | sed -e 's/.*hidden[^>]*SAMLResponse[^>]*value=[\"'\'']\([^\"'\'']*\)[\"'\''].*/\1/')
 
+
 # REQUEST #3: post the SAMLResponse to proxy
 html=$(curl -L -sS -c ${cookieJar} -b ${cookieJar} -w 'LAST_URL:%{url_effective}' \
   --data-urlencode "SAMLResponse=${proxySamlResponse}" --resolve ${proxyDomainName}':443:'${ip} ${proxySamlEndpoint}) || end 2 "Failed to fetch URL: $proxySamlEndpoint"
 
+hasErrorReportForm ${html}
+
 # We do not support JS, so parse HTML for SAML endpoint and response
 spSamlEndpoint=$(echo ${html} | sed -e 's/.*form[^>]*action=[\"'\'']\([^\"'\'']*\)[\"'\''].*method[^>].*/\1/')
 spSamlResponse=$(echo ${html} | sed -e 's/.*hidden[^>]*SAMLResponse[^>]*value=[\"'\'']\([^\"'\'']*\)[\"'\''].*/\1/')
+
 
 # REQUEST #4: post the SAMLResponse to SP
 html=$(curl -L -sS -c ${cookieJar} -b ${cookieJar} -w 'LAST_URL:%{url_effective}' \
