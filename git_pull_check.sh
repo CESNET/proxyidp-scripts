@@ -7,7 +7,7 @@ for path in $paths
 do
     if [[ -d $path ]]; then
         cd $path
-        $(git fetch origin 2>&1)
+        git fetch origin 2>&1
         result=$(git diff --name-only origin/production 2>&1)
         if [[ -n $result ]] ; then
             status=1
