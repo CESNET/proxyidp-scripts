@@ -3,11 +3,18 @@
 ## List of Local scripts
 Local scripts are located in /usr/lib/check_mk/local/ 
 
-###  git_pull_check.sh
+###  php_syntax_check.sh
 * Attributes to be filled: 
 <pre>
 # List of paths to check separated by space
 paths=""
+</pre>
+
+###  git_pull_check.sh
+* Attributes to be filled: 
+<pre>
+# The root directory to check
+dir=""
 </pre>
 
 ### services_running_check.sh
