@@ -57,6 +57,33 @@ instanceName=""
 proxyDomainName="login.elixir-czech.org"
 </pre>
 
+### ldap_status.sh
+This script checks if the LDAP servers are accessible
+
+* Requirements:
+    * library *ldap-utils* 
+        <pre>
+        apt-get install ldap-utils
+        </pre>
+* Attributes to be filled:
+    <pre>
+    # LDAP username
+    user=""
+    
+    # LDAP password
+    password=""
+    
+    # Base dn of LDAP tree
+    basedn=""
+    
+    # eduPersonPrincipalName which will be searched
+    searchedIdentity=""
+    
+    # List of LDPA hostnames separated by space
+    # Included ldap:// or ldaps:// 
+    hostnames=""
+    </pre>
+
 ## List of plugins
 Plugins are located in /usr/lib/check_mk/plugins/ 
 
