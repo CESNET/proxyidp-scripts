@@ -8,13 +8,14 @@ do
     if [[ -d $path ]]; then
         cd $path
         git fetch origin 2>&1
-        result=$(git diff --name-only origin/production 2>&1)
-        if [[ -n $result ]] ; then
-            status=1
-            statustxt="WARNING - There are available new commits"
-        else
+        localhash=$(git rev-parse HEAD)
+        remotehash=$(git rev-parse origin/production)
+        if [[ $localhash=$remotehash ]] ; then
             status=0
             statustxt="OK"
+        else
+            status=1
+            statustxt="WARNING - There are available new commits"
         fi
     else
         status=2
