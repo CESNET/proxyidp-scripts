@@ -1,7 +1,9 @@
 # The urls of tested SP
 # For example: https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authentication=muni
-muniTestSite=""
-cesnetTestSite=""
+muniSamlTestSite=""
+cesnetSamlTestSite=""
+muniOidcTestSite=""
+cesnetOidcTestSite=""
 
 # The url of logins form of used IdP
 # For example: https://idp2.ics.muni.cz/idp/Authn/UserPassword
@@ -25,4 +27,5 @@ instanceName=""
 proxyDomainName=""
 
 # How long is normal for total roundtrip (seconds)
-warningTime=10
+samlWarningTime=10
+oidcWarningTime=10
