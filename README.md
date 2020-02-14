@@ -25,11 +25,15 @@ services=""
 </pre>
 
 ### Proxy idp authentication test - local
-There are two separate scripts (one of them uses SAML, the other uses OIDC) checking the login to SP via the host from which the scripts run. They have common requirements.
-* Script names
+There are two main scripts (one of them uses SAML, the other uses OIDC) checking the login to SP via the host from which the scripts run and some helper scripts located in folder `proxy_idp_auth_test_script/`
+* Main scripts:
     * proxy_idp_auth_test_saml.sh
     * proxy_idp_auth_test_oidc.sh
-
+* Helper scripts:
+    * proxy_idp_auth_test_script/saml_auth_test_cesnet.sh
+    * proxy_idp_auth_test_script/saml_auth_test_muni.sh
+    * proxy_idp_auth_test_script/oidc_auth_test_cesnet.sh
+    * proxy_idp_auth_test_script/oidc_auth_test_muni.sh
 * Requirements:
     * library *bc*
         <pre>
@@ -40,35 +44,38 @@ There are two separate scripts (one of them uses SAML, the other uses OIDC) chec
             <pre>
             # The urls of tested SP
             # For example: https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authentication=muni
-            muniSamlTestSite=""         # Needed only for SAML
-            cesnetSamlTestSite=""       # Needed only for SAML
-            muniOidcTestSite=""         # Needed only for OIDC
-            cesnetOidcTestSite=""       # Needed only for OIDC
+            MUNI_SAML_TEST_SITE=""          # Needed only for SAML
+            CESNET_SAML_TEST_SITE=""        # Needed only for SAML
+            MUNI_OIDC_TEST_SITE=""          # Needed only for OIDC
+            CESNET_OIDC_TEST_SITE=""        # Needed only for OIDC
 
             # The url of logins form of used IdP
             # For example: https://idp2.ics.muni.cz/idp/Authn/UserPassword
-            muniLoginSite=""
-            cesnetLoginSite=""
+            MUNI_LOGIN_SITE=""
+            CESNET_LOGIN_SITE=""
 
             # Fill in logins
-            muniLogin=""
-            cesnetLogin=""
+            MUNI_LOGIN=""
+            CESNET_LOGIN=""
 
             # Fill in passwords as string
-            muniPasswd=""
-            cesnetPasswd=""
+            MUNI_PASSWORD=""
+            CESNET_PASSWORD=""
 
             # Fill in the instance name
             # Instance name must not contain a space
-            instanceName=""
+            INSTANCE_NAME=""
 
             # Fill in the global domain name of ProxyIdP
             # For example: login.cesnet.cz
-            proxyDomainName=""
-            
+            PROXY_DOMAIN_NAME=""
+
             # How long is normal for total roundtrip (seconds)
-            samlWarningTime=10      # Needed only for SAML
-            oidcWarningTime=10      # Needed only for OIDC
+            SAML_WARNING_TIME=10        # Needed only for SAML
+            OIDC_WARNING_TIME=15        # Needed only for OIDC
+
+            # Timeout time
+            TIMEOUT_TIME=40
             </pre>
 
 ### ldap_status.sh
@@ -105,10 +112,15 @@ Plugins are located in /usr/lib/check_mk/plugins/
 Active scripts are located in Nagios machine
 
 ### Proxy idp authentication test - active
-There are two scripts (one uses SAML, the other uses OIDC) checking the login via active ProxyIdP machine. They have the same params.
-* Script names:
+There are two main scripts (one uses SAML, the other uses OIDC) checking the login via active ProxyIdP machine and some helper scripts located in folder `proxy_idp_auth_test_script/`
+* Main scripts:
     * proxy_idp_auth_test_active_saml.sh
     * proxy_idp_auth_test_active_oidc.sh
+* Helper scripts:
+    * proxy_idp_auth_test_script/saml_auth_test_cesnet_active.sh
+    * proxy_idp_auth_test_script/saml_auth_test_muni_active.sh
+    * proxy_idp_auth_test_script/oidc_auth_test_cesnet_active.sh
+    * proxy_idp_auth_test_script/oidc_auth_test_muni_active.sh
 * How to run these scripts:
     * Params:
         * 1 - The url of tested SP via MU account
@@ -119,12 +131,12 @@ There are two scripts (one uses SAML, the other uses OIDC) checking the login vi
         * 6 - The url of login form of CESNET IdP
         * 7 - CESNET Login
         * 8 - CESNET Password
-        * 9 - Roundtrip time (in seconds)
-            - Default value = 10
+        * 9 - Roundtrip time (in seconds) - The standard login time. After this time the return value can be changed to WARNING state
+        * 10 - Timeout time (in seconds) - After this time the helper script timeouts
     * Examples:
         <pre>
-        ./proxy_idp_auth_test_active_saml.sh "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=muni" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=cesnet" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" 10
-        ./proxy_idp_auth_test_active_oidc.sh "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=muni" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=cesnet" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" 10
+        ./proxy_idp_auth_test_active_saml.sh "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=muni" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=cesnet" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" 10 40
+        ./proxy_idp_auth_test_active_oidc.sh "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=muni" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=cesnet" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" 15 40
         </pre>
 
 ### mariadb_replication_check.sh
