@@ -24,8 +24,11 @@ dir=""
 services=""
 </pre>
 
-### proxy_idp_auth_test.sh
-This script checks the login to SP via the host, from which is the script runs
+### Proxy idp authentication test - local
+There are two separate scripts (one of them uses SAML, the other uses OIDC) checking the login to SP via the host from which the scripts run. They have common requirements.
+* Script names
+    * proxy_idp_auth_test_saml.sh
+    * proxy_idp_auth_test_oidc.sh
 
 * Requirements:
     * library *bc*
@@ -37,8 +40,10 @@ This script checks the login to SP via the host, from which is the script runs
             <pre>
             # The urls of tested SP
             # For example: https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authentication=muni
-            muniTestSite=""
-            cesnetTestSite=""
+            muniSamlTestSite=""         # Needed only for SAML
+            cesnetSamlTestSite=""       # Needed only for SAML
+            muniOidcTestSite=""         # Needed only for OIDC
+            cesnetOidcTestSite=""       # Needed only for OIDC
 
             # The url of logins form of used IdP
             # For example: https://idp2.ics.muni.cz/idp/Authn/UserPassword
@@ -60,6 +65,10 @@ This script checks the login to SP via the host, from which is the script runs
             # Fill in the global domain name of ProxyIdP
             # For example: login.cesnet.cz
             proxyDomainName=""
+            
+            # How long is normal for total roundtrip (seconds)
+            samlWarningTime=10      # Needed only for SAML
+            oidcWarningTime=10      # Needed only for OIDC
             </pre>
 
 ### ldap_status.sh
@@ -95,10 +104,12 @@ Plugins are located in /usr/lib/check_mk/plugins/
 ## Nagios active scripts
 Active scripts are located in Nagios machine
 
-### proxy_idp_auth_test_active.sh
-This script checks the login via active ProxyIdP machine
-
-* How to run this script:
+### Proxy idp authentication test - active
+There are two scripts (one uses SAML, the other uses OIDC) checking the login via active ProxyIdP machine. They have the same params.
+* Script names:
+    * proxy_idp_auth_test_active_saml.sh
+    * proxy_idp_auth_test_active_oidc.sh
+* How to run these scripts:
     * Params:
         * 1 - The url of tested SP via MU account
         * 2 - The url of login form of MU IdP
@@ -110,9 +121,10 @@ This script checks the login via active ProxyIdP machine
         * 8 - CESNET Password
         * 9 - Roundtrip time (in seconds)
             - Default value = 10
-    * Example:
+    * Examples:
         <pre>
-        ./proxy_idp_auth_test_active.sh "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=muni" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=cesnet" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" 10
+        ./proxy_idp_auth_test_active_saml.sh "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=muni" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=cesnet" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" 10
+        ./proxy_idp_auth_test_active_oidc.sh "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=muni" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=cesnet" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" 10
         </pre>
 
 ### mariadb_replication_check.sh

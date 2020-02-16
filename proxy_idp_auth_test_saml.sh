@@ -4,7 +4,8 @@
 # Exit statuses indicate problem and are suitable for usage in Nagios.
 # @author Pavel Vyskocil <pavel.vyskocil@cesnet.cz>
 
-source proxy_idp_auth_test_config.sh
+mydir="${0%/*}"
+source "${mydir}"/proxy_idp_auth_test_config.sh
 
 basename=$(basename $0)
 
@@ -154,7 +155,7 @@ authCesnet()
 
   if [[ $html == *errorreport.php* ]]; then
       errorMessage=$(echo ${html} | sed -e 's/.*<h1>.*<\/i>\s\(.*\)\s<\/h1>.*id="content">\s<p>\s\(.*\)<a.*moreInfo.*/\1 - \2/g')
-      setMuniStatus 2 "Get error: ${errorMessage} "
+      setCesnetStatus 2 "Get error: ${errorMessage} "
       return
   fi
 
@@ -181,13 +182,13 @@ authCesnet()
   fi
 }
 
-authMuni ${muniTestSite} ${muniLoginSite} ${muniLogin} ${muniPasswd}
-authCesnet ${cesnetTestSite} ${cesnetLoginSite} ${cesnetLogin} ${cesnetPasswd}
+authMuni ${muniSamlTestSite} ${muniLoginSite} ${muniLogin} ${muniPasswd}
+authCesnet ${cesnetSamlTestSite} ${cesnetLoginSite} ${cesnetLogin} ${cesnetPasswd}
 
 if [[ $muniLoginStatus -eq 0 && $cesnetLoginStatus -eq 0 ]]; then
-  if [[ $muniTotalTime -gt $(( $warningTime * 1000000000 )) || $cesnetTotalTime -gt $(( $warningTime * 1000000000 )) ]];then
+  if [[ $muniTotalTime -gt $(( $samlWarningTime * 1000000000 )) || $cesnetTotalTime -gt $(( $samlWarningTime * 1000000000 )) ]];then
     status=1
-    statusTxt="Successful login, but was too long(More than ${warningTime}s)!"
+    statusTxt="Successful login, but was too long(More than ${samlWarningTime}s)!"
   else
     status=0
     statusTxt="Successful login!"
