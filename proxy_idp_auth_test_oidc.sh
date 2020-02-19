@@ -1,221 +1,57 @@
 #!/bin/bash
-# This script is used make a full roundtrip test to SimpleSAMLphp based SSO
+
+# This script is used make a full roundtrip login test to OIDC SP
 # Exit statuses indicate problem and are suitable for usage in Nagios.
+# @author Pavel Vyskocil <Pavel.Vyskocil@cesnet.cz>
 
-mydir="${0%/*}"
-source "${mydir}"/proxy_idp_auth_test_config.sh
+DIR="${0%/*}"
+source "${DIR}/proxy_idp_auth_test_config.sh"
 
-basename=$(basename $0)
+BASENAME=$(basename "$0")
+WARNING_TIME=${OIDC_WARNING_TIME}
 
-## Get host IP
-ip=($(hostname -I))
+SCRIPT_DIR="${DIR}/proxy_idp_auth_test_script"
 
-setMuniStatus()
-{
-    muniLoginStatus=$1
-    muniStatusTxt=$2
+MUNI_LOGIN_CMD="$SCRIPT_DIR/oidc_auth_test_muni.sh ${MUNI_OIDC_TEST_SITE} ${MUNI_LOGIN_SITE} ${MUNI_LOGIN} ${MUNI_PASSWORD} ${PROXY_DOMAIN_NAME}"
+CESNET_LOGIN_CMD="$SCRIPT_DIR/oidc_auth_test_cesnet.sh ${CESNET_OIDC_TEST_SITE} ${CESNET_LOGIN_SITE} ${CESNET_LOGIN} ${CESNET_PASSWORD} ${PROXY_DOMAIN_NAME}"
 
-    # Clean up
-    rm -f ${cookieJar}
+START_TIME=$(date +%s%N)
+MUNI_RESULT=$(timeout ${TIMEOUT_TIME} ${MUNI_LOGIN_CMD})
+MUNI_RC=$?
+END_TIME=$(date +%s%N)
+if [ ${MUNI_RC} -gt 2 ]; then
+  MUNI_RC=2
+  MUNI_RESULT="Login with MUNI account timeouted after ${TIMEOUT_TIME}s!"
+fi
+MUNI_TOTAL_TIME=$(expr ${END_TIME} - ${START_TIME})
+MUNI_LOGIN_TIME=$(echo "scale=4;${MUNI_TOTAL_TIME} / 1000000000" | bc -l)
 
-    # Calculate time difference
-    endTime=$(date +%s%N)
-    muniTotalTime=$(expr $endTime - $startTime)
-    muniLoginTime=$(echo "scale=4;$muniTotalTime / 1000000000" | bc -l)
-}
+START_TIME=$(date +%s%N)
+CESNET_RESULT=$(timeout ${TIMEOUT_TIME} ${CESNET_LOGIN_CMD})
+CESNET_RC=$?
+END_TIME=$(date +%s%N)
 
-setCesnetStatus()
-{
-    cesnetLoginStatus=$1
-    cesnetStatusTxt=$2
-
-    # Clean up
-    rm -f ${cookieJar}
-
-    # Calculate time difference
-    endTime=$(date +%s%N)
-    cesnetTotalTime=$(expr $endTime - $startTime)
-    cesnetLoginTime=$(echo "scale=4;$cesnetTotalTime / 1000000000" | bc -l)
-}
-
-authMuni()
-{
-    testSite=$1
-    loginSite=$2
-    login=$3
-    password=$4
-
-    cookieJar=$(mktemp /tmp/${basename}.XXXXXX) || exit 3
-    startTime=$(date +%s%N)
-
-    # REQUEST #1: fetch URL for authentication page
-    html=$(curl -L -sS -c ${cookieJar} -w 'LAST_URL:%{url_effective}' --resolve ${proxyDomainName}':443:'${ip} ${testSite}) || (setMuniStatus 2 "Failed to fetch URL: $testSite" && return)
-
-    # Parse HTML to get the URL where to POST login (written out by curl itself above)
-    authURL=$(echo ${html} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
-    authState=$(echo ${html} | sed -e 's/.*hidden[^>]*AuthState[^>]*value=[\"'\'']\([^\"'\'']*\)[\"'\''].*/\1/')
-
-    # We should be redirected
-    if [[ $authURL == "$testSite" ]]; then
-        setMuniStatus 2 "No redirection to: $loginSite." && return
-    fi
-
-    # REQUEST #2: log in
-    html=$(curl -L -s -c ${cookieJar} -b ${cookieJar} -w 'LAST_URL:%{url_effective}' \
-    -d "j_username=$login" -d  "j_password=$password" --data-urlencode "AuthState=${authState}" --resolve ${proxyDomainName}':443:'${ip} ${authURL}) || (setMuniStatus 2 "Failed to fetch URL: $authURL" && return)
-    lastURL=$(echo ${html} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
-
-    # We should be successfully logged in
-    if [[ $lastURL == "$authURL" ]]; then
-        setMuniStatus 2 "Invalid credentials."
-        return
-    fi
-
-    # We do not support JS, so parse HTML for SAML endpoint and response
-    proxySamlEndpoint=$(echo ${html} | sed -e 's/.*form[^>]*action=[\"'\'']\([^\"'\'']*\)[\"'\''].*method[^>].*/\1/' | php -R 'echo html_entity_decode($argn);')
-    proxySamlResponse=$(echo ${html} | sed -e 's/.*hidden[^>]*SAMLResponse[^>]*value=[\"'\'']\([^\"'\'']*\)[\"'\''].*/\1/')
-    if [[ $proxySamlEndpoint =~ .*\<html\>.* || $proxySamlResponse =~ .*\<html\>.* ]]; then
-        setMuniStatus 2 "Not redirected to PROXY post data"
-        return
-    fi
-
-    # REQUEST #3: post the SAMLResponse to proxy
-    html=$(curl -L -s -c "${cookieJar}" -b "${cookieJar}" -w 'LAST_URL:%{url_effective}' \
-    --data-urlencode "SAMLResponse=${proxySamlResponse}" --resolve ${proxyDomainName}':443:'${ip} ${proxySamlEndpoint}) || (setMuniStatus 2 "Failed to fetch URL: $proxySamlEndpoint" && return)
-    lastURL=$(echo ${html} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
-
-    # We should be redirected to perform POST request to Shibboleth SP
-	  if [[ $html == *errorreport.php* ]]; then
-      errorMessage=$(echo ${html} | sed -e 's/.*<h1>.*<\/i>\s\(.*\)\s<\/h1>.*id="content">\s<p>\s\(.*\)<a.*moreInfo.*/\1 - \2/g')
-      setMuniStatus 2 "Got error: ${errorMessage} "
-      return
-    fi
-
-    # We do not support JS, so parse HTML for SAML endpoint and response
-    spSamlEndpoint=$(echo ${html} | sed -e 's/.*form[^>]*action=[\"'\'']\([^\"'\'']*\)[\"'\''].*method[^>].*/\1/')
-    spSamlResponse=$(echo ${html} | sed -e 's/.*hidden[^>]*SAMLResponse[^>]*value=[\"'\'']\([^\"'\'']*\)[\"'\''].*/\1/')
-    spRelayState=$(echo ${html} | sed -e 's/.*hidden[^>]*RelayState[^>]*value=[\"'\'']\([^\"'\'']*\)[\"'\''].*/\1/')
-
-    if [[ $spSamlEndpoint =~ .*\<html\>.* || $spSamlResponse =~ .*\<html\>.* || $spRelayState =~ .*\<html\>.* ]]; then
-        setMuniStatus 2 "Not redirected to SP post data"
-        return
-    fi
-
-    # REQUEST #4: post the SAMLResponse to SP
-    html=$(curl -L -s -c "${cookieJar}" -b "${cookieJar}" -w 'LAST_URL:%{url_effective}' \
-    --data-urlencode "SAMLResponse=${spSamlResponse}" --data-urlencode "RelayState=${spRelayState}" --resolve ${proxyDomainName}':443:'${ip} ${spSamlEndpoint}) || (setMuniStatus 2 "Failed to fetch URL: $spSamlEndpoint" && return)
-    lastURL=$(echo ${html} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
-
-    # OIDC adds some params to the "testSite" URL so we need to compare like this
-    match=$(echo $lastURL | sed -e 's/\(https.*aai-playground.*code=.*state=.*\)$/OK/')
-    if [[ $match == 'OK' ]]; then
-        result=$(echo ${html} | sed -e 's/.*<body>\sResult-\(.*\)\s<\/body.*$/\1/')
-        if [[ $result == "OK" ]]; then
-            setMuniStatus 0 "Successful login"
-        else
-            setMuniStatus 2 "Bad result: $result."
-        fi
-    else
-        setMuniStatus 2 "Not redirected back to: $testSite&code=...&state=...."
-    fi
-}
-
-authCesnet()
-{
-    testSite=$1
-    loginSite=$2
-    login=$3
-    password=$4
-
-    cookieJar=$(mktemp /tmp/${basename}.XXXXXX) || exit 3
-    startTime=$(date +%s%N)
-
-    # REQUEST #1: fetch URL for authentication page
-    html=$(curl -L -s -c "${cookieJar}" -w 'LAST_URL:%{url_effective}' --resolve ${proxyDomainName}':443:'${ip} "${testSite}") || (setCesnetStatus 2 "Failed to fetch URL: $testSite" && return)
-
-    # Parse HTML to get the URL where to POST login (written out by curl itself above)
-    authURL=$(echo ${html} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
-
-    # We should be redirected
-    if [[ $authURL == "$testSite" ]]; then
-        setCesnetStatus 2 "No redirection to: $loginSite."
-        return
-    fi
-
-    # REQUEST #2: log in
-    html=$(curl -L -s -c "${cookieJar}" -b "${cookieJar}" -w 'LAST_URL:%{url_effective}' -d "j_username=$login" -d  "j_password=$password" -d "_eventId_proceed=" --data-urlencode --resolve ${proxyDomainName}':443:'${ip} "${authURL}") || (setCesnetStatus 2 "Failed to fetch URL: $authURL" && return)
-    lastURL=$(echo ${html} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
-
-    # We do not support JS, so parse HTML for SAML endpoint and response
-    proxySamlEndpoint=$(echo ${html} | sed -e 's/.*form[^>]*action=[\"'\'']\([^\"'\'']*\)[\"'\''].*method[^>].*/\1/' | php -R 'echo html_entity_decode($argn);')
-    proxySamlResponse=$(echo ${html} | sed -e 's/.*hidden[^>]*SAMLResponse[^>]*value=[\"'\'']\([^\"'\'']*\)[\"'\''].*/\1/')
-
-    if [[ $authURL != "$lastURL" ]]; then
-        setCesnetStatus 2 "Invalid credentials."
-        return
-    elif [[ $proxySamlEndpoint =~ .*\<html\>.* || $proxySamlResponse =~ .*\<html\>.* ]]; then
-        setCesnetStatus 2 "Not redirected to PROXY post data"
-        return
-    fi
-
-    # REQUEST #3: post the SAMLResponse to proxy
-    html=$(curl -L -s -c "${cookieJar}" -b "${cookieJar}" -w 'LAST_URL:%{url_effective}' \
-    --data-urlencode "SAMLResponse=${proxySamlResponse}" --resolve "${proxyDomainName}"':443:'${ip} "${proxySamlEndpoint}") || (setCesnetStatus 2 "Failed to fetch URL: $proxySamlEndpoint" && return)
-
-    if [[ $html == *errorreport.php* ]]; then
-        errorMessage=$(echo "${html}" | sed -e 's/.*<h1>.*<\/i>\s\(.*\)\s<\/h1>.*id="content">\s<p>\s\(.*\)<a.*moreInfo.*/\1 - \2/g')
-        setCesnetStatus 2 "Got error: ${errorMessage} "
-        return
-    fi
-
-    # We do not support JS, so parse HTML for SAML endpoint and response
-    spSamlEndpoint=$(echo ${html} | sed -e 's/.*form[^>]*action=[\"'\'']\([^\"'\'']*\)[\"'\''].*method[^>].*/\1/')
-    spSamlResponse=$(echo ${html} | sed -e 's/.*hidden[^>]*SAMLResponse[^>]*value=[\"'\'']\([^\"'\'']*\)[\"'\''].*/\1/')
-    spRelayState=$(echo ${html} | sed -e 's/.*hidden[^>]*RelayState[^>]*value=[\"'\'']\([^\"'\'']*\)[\"'\''].*/\1/')
-
-    if [[ $spSamlEndpoint =~ .*\<html\>.* || $spSamlResponse =~ .*\<html\>.* || $spRelayState =~ .*\<html\>.* ]]; then
-        setCesnetStatus 2 "Not redirected to SP post data"
-        return
-    fi
-
-    # REQUEST #4: post the SAMLResponse to SP
-    html=$(curl -L -s -c ${cookieJar} -b ${cookieJar} -w 'LAST_URL:%{url_effective}' \
-    --data-urlencode "SAMLResponse=${spSamlResponse}" --data-urlencode "RelayState=${spRelayState}" --resolve ${proxyDomainName}':443:'${ip} ${spSamlEndpoint}) || (setCesnetStatus 2 "Failed to fetch URL: $spSamlEndpoint" && return)
-    lastURL=$(echo ${html} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
-
-    match=$(echo $lastURL | sed -e "s/\(https.*aai-playground.*code=.*state=.*\)$/OK/")
-    if [[ $match == 'OK' ]]; then
-        result=$(echo ${html} | sed -e 's/.*<body>\sResult-\(.*\)\s<\/body.*$/\1/')
-        if [[ $result == "OK" ]]; then
-            setCesnetStatus 0 "Successful login"
-        else
-            setCesnetStatus 2 "Bad result: $result."
-        fi
-    else
-        setCesnetStatus 2 "Not redirected back to: $testSite&code=...&state=...."
-    fi
-}
-
-authMuni ${muniOidcTestSite} ${muniLoginSite} ${muniLogin} ${muniPasswd}
-authCesnet ${cesnetOidcTestSite} ${cesnetLoginSite} ${cesnetLogin} ${cesnetPasswd}
-
-if [[ $muniLoginStatus -eq 0 && $cesnetLoginStatus -eq 0 ]]; then
-    if [[ $muniTotalTime -gt $(( oidcWarningTime * 1000000000 )) || $cesnetTotalTime -gt $(( oidcWarningTime * 1000000000 )) ]];then
-        status=1
-        statusTxt="Successful login, but was too long(More than ${oidcWarningTime}s)!"
-    else
-        status=0
-        statusTxt="Successful login!"
-    fi
-else
-    if [[ $muniLoginStatus -eq 2 && $cesnetLoginStatus -eq 0 ]] || [[ $muniLoginStatus -eq 0 && $cesnetLoginStatus -eq 2 ]]; then
-        status=1
-        statusTxt="Only one of logins was successful!"
-    else
-        status=2
-        statusTxt="Unsuccessful login!"
-    fi
+if [ ${CESNET_RC} -gt 2 ]; then
+  CESNET_RC=2
+  CESNET_RESULT="Login with CESNET account timeouted after ${TIMEOUT_TIME}s!"
 fi
 
-echo "$status $basename-$instanceName muni_login_time=$muniLoginTime|cesnet_login_time=$cesnetLoginTime  - $statusTxt [MUNI status - $muniStatusTxt(${muniLoginTime}s); CESNET status - $cesnetStatusTxt(${cesnetLoginTime}s)]"
+CESNET_TOTAL_TIME=$(expr ${END_TIME} - ${START_TIME})
+CESNET_LOGIN_TIME=$(echo "scale=4;${CESNET_TOTAL_TIME} / 1000000000" | bc -l)
+
+if [[ ${MUNI_RC} -eq 0 || ${CESNET_RC} -eq 0 ]]; then
+  if [[ ${MUNI_TOTAL_TIME} -gt $(( WARNING_TIME * 1000000000 )) && ${CESNET_TOTAL_TIME} -gt $(( WARNING_TIME * 1000000000 )) ]];then
+    STATUS=1
+    STATUS_TXT="Successful login, but was too long(More than ${WARNING_TIME}s)!"
+  else
+    STATUS=0
+    STATUS_TXT="Successful login!"
+  fi
+else
+  STATUS=2
+  STATUS_TXT="Unsuccessful login!"
+fi
+
+
+echo "${STATUS} ${BASENAME}-${INSTANCE_NAME} muni_login_time=${MUNI_LOGIN_TIME}|cesnet_login_time=${CESNET_LOGIN_TIME} ${STATUS_TXT} [MUNI STATUS - ${MUNI_RESULT}(${MUNI_LOGIN_TIME}s); CESNET STATUS - ${CESNET_RESULT}(${CESNET_LOGIN_TIME}s)]"
 exit 0

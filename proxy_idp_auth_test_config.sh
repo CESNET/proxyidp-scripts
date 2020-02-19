@@ -1,31 +1,34 @@
 # The urls of tested SP
 # For example: https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authentication=muni
-muniSamlTestSite=""
-cesnetSamlTestSite=""
-muniOidcTestSite=""
-cesnetOidcTestSite=""
+MUNI_SAML_TEST_SITE=""
+CESNET_SAML_TEST_SITE=""
+MUNI_OIDC_TEST_SITE=""
+CESNET_OIDC_TEST_SITE=""
 
 # The url of logins form of used IdP
 # For example: https://idp2.ics.muni.cz/idp/Authn/UserPassword
-muniLoginSite=""
-cesnetLoginSite=""
+MUNI_LOGIN_SITE=""
+CESNET_LOGIN_SITE=""
 
 # Fill in logins
-muniLogin=""
-cesnetLogin=""
+MUNI_LOGIN=""
+CESNET_LOGIN=""
 
 # Fill in passwords as string
-muniPasswd=""
-cesnetPasswd=""
+MUNI_PASSWORD=""
+CESNET_PASSWORD=""
 
 # Fill in the instance name
 # Instance name must not contain a space
-instanceName=""
+INSTANCE_NAME=""
 
 # Fill in the global domain name of ProxyIdP
 # For example: login.cesnet.cz
-proxyDomainName=""
+PROXY_DOMAIN_NAME=""
 
 # How long is normal for total roundtrip (seconds)
-samlWarningTime=10
-oidcWarningTime=10
+SAML_WARNING_TIME=10
+OIDC_WARNING_TIME=15
+
+# Timeout time
+TIMEOUT_TIME=40
