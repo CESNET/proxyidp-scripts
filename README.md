@@ -9,3 +9,6 @@ All nagios scripts are located under `nagios` directory.
 
 * Params:
     * 1 - The file name
+    
+### backup_database.sh
+* Do mysqldump into `/opt/mariadb_backup` and remove all dump file older than 7 days
