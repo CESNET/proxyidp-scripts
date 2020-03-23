@@ -1,32 +1,36 @@
 #!/bin/bash
 
 # LDAP username
-user=""
+USER=""
 
 # LDAP password
-password=""
+PASSWORD=""
 
 # Base dn of LDAP tree
-basedn=""
+BASEDN=""
 
-# eduPersonPrincipalName which will be searched
-searchedIdentity=""
+# eduPersonPrincipalName which the script will look for
+IDENTITY=""
 
-# List of LDPA hostnames separated by space
-# Included ldap:// or ldaps://
-hostnames=""
+# List of LDAP HOSTNAMES separated by whitespace
+# Each value must start with ldap:// or ldaps://
+# For example: "ldaps://hostname.com ldap://hostname.com"
+HOSTNAMES=""
 
-for hostname in $hostnames
+for HOSTNAME in $HOSTNAMES
 do
-    if [[ -z $password ]]; then
-        ldapresult=$(ldapsearch  -x -H $hostname -b $basedn  "(eduPersonPrincipalNames=$searchedIdentity)" 2>&1)
+    START_TIME=$(date +%s%N)
+    if [[ -z $PASSWORD ]]; then
+        LDAP_RESULT=$(timeout 10 ldapsearch  -x -H $HOSTNAME -b $BASEDN  "(eduPersonPrincipalNames=$IDENTITY)" 2>&1)
     else
-        ldapresult=$(ldapsearch  -x -H $hostname -D $user -w $password -b $basedn  "(eduPersonPrincipalNames=$searchedIdentity)" 2>&1)
+        LDAP_RESULT=$(timeout 10 ldapsearch  -x -H $HOSTNAME -D $USER -w $PASSWORD -b $BASEDN  "(eduPersonPrincipalNames=$IDENTITY)" 2>&1)
     fi
-    result=$?
-    if [[ $result == 0  ]]; then
-        echo "0 ldap_status-$hostname - OK"
+    RESULT=$?
+    END_TIME=$(date +%s%N)
+    TOTAL_TIME=$(echo "scale=4;$(expr ${END_TIME} - ${START_TIME}) / 1000000000" | bc -l)
+    if [[ $RESULT == 0  ]]; then
+        echo "0 ldap_status-$HOSTNAME total_time=${TOTAL_TIME} OK"
     else
-        echo "2 ldap_status-$hostname - $ldapresult"
+        echo "2 ldap_status-$HOSTNAME total_time=${TOTAL_TIME} ${LDAP_RESULT}"
     fi
 done

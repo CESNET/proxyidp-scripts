@@ -89,20 +89,21 @@ This script checks if the LDAP servers are accessible
 * Attributes to be filled:
     <pre>
     # LDAP username
-    user=""
+    USER=""
 
     # LDAP password
-    password=""
+    PASSWORD=""
 
     # Base dn of LDAP tree
-    basedn=""
+    BASEDN=""
 
-    # eduPersonPrincipalName which will be searched
-    searchedIdentity=""
+    # eduPersonPrincipalName which the script will look for
+    IDENTITY=""
 
-    # List of LDPA hostnames separated by space
-    # Included ldap:// or ldaps://
-    hostnames=""
+    # List of LDAP HOSTNAMES separated by whitespace
+    # Each value must start with ldap:// or ldaps://
+    # For example: "ldaps://hostname.com ldap://hostname.com"
+    HOSTNAMES=""
     </pre>
 
 ## List of plugins
