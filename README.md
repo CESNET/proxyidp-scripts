@@ -106,6 +106,32 @@ This script checks if the LDAP servers are accessible
     HOSTNAMES=""
     </pre>
 
+### rpc_status.sh
+This script checks if the RPC server is accessible and if RPC returns valid user
+
+* Requirements:
+    * library *bc*
+        <pre>
+        apt-get install bc
+        </pre>
+* Attributes to be filled:
+    <pre>
+    # RPC username
+    USER=""
+
+    # RPC password
+    PASSWORD=""
+
+    # RPC domain with authentication method
+    # Example: "perun.cesnet.cz/krb"
+    DOMAIN=""
+
+    # Valid userId - This id will be used in getUserById call
+    USER_ID=""
+    </pre>
+
+
+
 ## List of plugins
 Plugins are located in /usr/lib/check_mk/plugins/
 
