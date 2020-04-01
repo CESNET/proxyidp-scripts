@@ -32,3 +32,6 @@ OIDC_WARNING_TIME=15
 
 # Timeout time
 TIMEOUT_TIME=40
+
+# Cache time
+CACHE_TIME=60

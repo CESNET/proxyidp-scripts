@@ -7,6 +7,18 @@
 DIR="${0%/*}"
 source "${DIR}/proxy_idp_auth_test_config.sh"
 
+CACHE_FILE=${DIR}/proxy_idp_auth_test_saml.cache
+
+if [[ -f "$CACHE_FILE" ]]; then
+  CACHE_LAST_MODIFIED=$(($(date +%s) - $(date +%s -r ${CACHE_FILE})))
+  REGEX_CHECK=$(grep -c '\d proxy_idp_auth_test_saml.sh.*muni_login_time.*cesnet_login_time.*MUNI STATUS.*CESNET STATUS' ${CACHE_FILE})
+
+  if [[ ${CACHE_LAST_MODIFIED} -le ${CACHE_TIME} && $(wc -l <${CACHE_FILE}) -eq 1 && ${REGEX_CHECK} -eq 0 ]]; then
+    echo "$(<${CACHE_FILE})"
+    exit 0
+  fi
+fi
+
 BASENAME=$(basename "$0")
 WARNING_TIME=${SAML_WARNING_TIME}
 
@@ -52,6 +64,8 @@ else
   STATUS_TXT="Unsuccessful login!"
 fi
 
+RESULT="${STATUS} ${BASENAME}-${INSTANCE_NAME} muni_login_time=${MUNI_LOGIN_TIME}|cesnet_login_time=${CESNET_LOGIN_TIME} ${STATUS_TXT} [MUNI STATUS - ${MUNI_RESULT}(${MUNI_LOGIN_TIME}s); CESNET STATUS - ${CESNET_RESULT}(${CESNET_LOGIN_TIME}s)]"
 
-echo "${STATUS} ${BASENAME}-${INSTANCE_NAME} muni_login_time=${MUNI_LOGIN_TIME}|cesnet_login_time=${CESNET_LOGIN_TIME} ${STATUS_TXT} [MUNI STATUS - ${MUNI_RESULT}(${MUNI_LOGIN_TIME}s); CESNET STATUS - ${CESNET_RESULT}(${CESNET_LOGIN_TIME}s)]"
+echo ${RESULT}
+echo ${RESULT} > ${DIR}/proxy_idp_auth_test_saml.cache
 exit 0
