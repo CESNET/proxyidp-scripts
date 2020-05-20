@@ -26,6 +26,12 @@ services=""
 
 ### Proxy idp authentication test - local
 There are two main scripts (one of them uses SAML, the other uses OIDC) checking the login to SP via the host from which the scripts run and some helper scripts located in folder `proxy_idp_auth_test_script/`
+
+These scripts are able to cache their last result.
+
+* Params:
+    * 1 - if this param contains '-f', script does not use its cache and is forced to do whole login process
+
 * Main scripts:
     * proxy_idp_auth_test_saml.sh
     * proxy_idp_auth_test_oidc.sh

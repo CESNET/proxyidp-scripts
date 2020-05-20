@@ -9,11 +9,17 @@ source "${DIR}/proxy_idp_auth_test_config.sh"
 
 CACHE_FILE=${DIR}/proxy_idp_auth_test_saml.cache
 
+if [[ $1 == "-f" ]]; then
+    FORCE=0
+else
+    FORCE=1
+fi
+
 if [[ -f "$CACHE_FILE" ]]; then
   CACHE_LAST_MODIFIED=$(($(date +%s) - $(date +%s -r ${CACHE_FILE})))
   REGEX_CHECK=$(grep -c '\d proxy_idp_auth_test_saml.sh.*muni_login_time.*cesnet_login_time.*MUNI STATUS.*CESNET STATUS' ${CACHE_FILE})
 
-  if [[ ${CACHE_LAST_MODIFIED} -le ${CACHE_TIME} && $(wc -l <${CACHE_FILE}) -eq 1 && ${REGEX_CHECK} -eq 0 ]]; then
+  if [[ ${CACHE_LAST_MODIFIED} -le ${CACHE_TIME} && $(wc -l <${CACHE_FILE}) -eq 1 && ${REGEX_CHECK} -eq 0 && ${FORCE} -ne 0 ]]; then
     echo "$(<${CACHE_FILE})"
     exit 0
   fi
