@@ -43,18 +43,17 @@ fi
 
 # REQUEST #2: log in
 HTML=$(curl -L -s -c "${COOKIE_FILE}" -b "${COOKIE_FILE}" -w 'LAST_URL:%{url_effective}' \
--d "j_username=$LOGIN" -d  "j_password=$PASSWORD" --data-urlencode "AuthState=${AUTH_STATE}" --resolve ${DOMAIN_NAME}':443:'${IP} ${AUTH_URL}) || (end 2 "Failed to fetch URL: ${AUTH_URL}")
+-d "username=$LOGIN" -d  "password=$PASSWORD" --data-urlencode "AuthState=${AUTH_STATE}" --resolve ${DOMAIN_NAME}':443:'${IP} ${AUTH_URL}) || (end 2 "Failed to fetch URL: ${AUTH_URL}")
 
 LAST_URL=$(echo ${HTML} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
-
-# We should be successfully logged in
-if [[ ${LAST_URL} == "${AUTH_URL}" ]]; then
-    end 2 "Invalid credentials."
-fi
 
 # We do not support JS, so parse HTML for SAML endpoint and response
 PROXY_ENDPOINT=$(echo ${HTML} | sed -e 's/.*form[^>]*action=[\"'\'']\([^\"'\'']*\)[\"'\''].*method[^>].*/\1/' | php -R 'echo HTML_entity_decode($argn);')
 PROXY_RESPONSE=$(echo ${HTML} | sed -e 's/.*hidden[^>]*SAMLResponse[^>]*value=[\"'\'']\([^\"'\'']*\)[\"'\''].*/\1/')
+
+if [[ ${PROXY_ENDPOINT} == "?" ]]; then
+    end 2 "Invalid credentials."
+fi
 
 # REQUEST #3: post the SAMLResponse to proxy
 HTML=$(curl -L -s -c "${COOKIE_FILE}" -b "${COOKIE_FILE}" -w 'LAST_URL:%{url_effective}' \
