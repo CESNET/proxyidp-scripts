@@ -34,6 +34,7 @@ HTML=$(curl -L -s -c "${COOKIE_FILE}" -w 'LAST_URL:%{url_effective}' --resolve "
 
 # Parse HTML to get the URL where to POST LOGIN (written out by curl itself above)
 AUTH_URL=$(echo ${HTML} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
+CSRF_TOKEN=$(echo ${HTML} | sed -e 's/.*hidden[^>]*csrf_token[^>]*value=[\"'\'']\([^\"'\'']*\)[\"'\''].*/\1/')
 
 # We should be redirected
 if [[ ${AUTH_URL} == "${TEST_SITE}" ]]; then
@@ -42,8 +43,7 @@ if [[ ${AUTH_URL} == "${TEST_SITE}" ]]; then
 fi
 
 # REQUEST #2: log in
-HTML=$(curl -L -s -c "${COOKIE_FILE}" -b "${COOKIE_FILE}" -w 'LAST_URL:%{url_effective}' -d "j_username=$LOGIN" -d  "j_password=$PASSWORD" -d "_eventId_proceed=" --resolve "${DOMAIN_NAME}"':443:'${IP} "${AUTH_URL}") || (end 2 "Failed to fetch URL: ${AUTH_URL}")
-
+HTML=$(curl -L -s -c "${COOKIE_FILE}" -b "${COOKIE_FILE}" -w 'LAST_URL:%{url_effective}' -d "j_username=$LOGIN" -d  "j_password=$PASSWORD" -d "_eventId_proceed=" -d "csrf_token=$CSRF_TOKEN" --resolve "${DOMAIN_NAME}"':443:'${IP} "${AUTH_URL}") || (end 2 "Failed to fetch URL: ${AUTH_URL}")
 LAST_URL=$(echo ${HTML} | sed -e 's/.*LAST_URL:\(.*\)$/\1/')
 
 # We should be successfully logged in
