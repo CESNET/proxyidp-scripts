@@ -32,7 +32,7 @@ if not path.exists(full_log_dir_name):
 rename(absolute_file_name, full_log_absolute_name)
 
 session_ids = set()
-regex_session_id = '(?<=\s)[\w]+(?=\s+\S+\s+:)'
+regex_session_id = '(?<=\s\[)\w+(?=\]\s+\S+\s+:)'
 
 file = open(full_log_absolute_name, "r")
 for line in file:
