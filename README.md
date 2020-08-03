@@ -12,3 +12,6 @@ All nagios scripts are located under `nagios` directory.
     
 ### backup_database.sh
 * Do mysqldump into `/opt/mariadb_backup` and remove all dump file older than 7 days
+
+### separate_oidc_logs.py
+* Script for remove all logs from test accounts from OIDC logs
