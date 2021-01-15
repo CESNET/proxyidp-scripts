@@ -129,6 +129,8 @@ Active scripts are located in Nagios machine
 
 ### Proxy idp authentication test - active
 There are two main scripts (one uses SAML, the other uses OIDC) checking the login via active ProxyIdP machine and some helper scripts located in folder `proxy_idp_auth_test_script/`
+The main script gradually try to sign in via AAI Playground IdP, MUNI IdP and CESNET IdP.
+
 * Main scripts:
     * proxy_idp_auth_test_active_saml.sh
     * proxy_idp_auth_test_active_oidc.sh
