@@ -26,6 +26,7 @@ services=""
 
 ### Proxy idp authentication test - local
 There are two main scripts (one of them uses SAML, the other uses OIDC) checking the login to SP via the host from which the scripts run and some helper scripts located in folder `proxy_idp_auth_test_script/`
+The main script gradually try to sign in via AAI Playground IdP, MUNI IdP and CESNET IdP.
 
 These scripts are able to cache their last result.
 
@@ -36,8 +37,10 @@ These scripts are able to cache their last result.
     * proxy_idp_auth_test_saml.sh
     * proxy_idp_auth_test_oidc.sh
 * Helper scripts:
+    * proxy_idp_auth_test_script/saml_auth_test_aai.sh
     * proxy_idp_auth_test_script/saml_auth_test_cesnet.sh
     * proxy_idp_auth_test_script/saml_auth_test_muni.sh
+    * proxy_idp_auth_test_script/oidc_auth_test_aai.sh
     * proxy_idp_auth_test_script/oidc_auth_test_cesnet.sh
     * proxy_idp_auth_test_script/oidc_auth_test_muni.sh
 * Requirements:
@@ -50,17 +53,21 @@ These scripts are able to cache their last result.
             <pre>
             # The urls of tested SP
             # For example: https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authentication=muni
+            AAI_SAML_TEST_SITE=""          # Needed only for SAML
             MUNI_SAML_TEST_SITE=""          # Needed only for SAML
             CESNET_SAML_TEST_SITE=""        # Needed only for SAML
+            AAI_OIDC_TEST_SITE=""          # Needed only for OIDC
             MUNI_OIDC_TEST_SITE=""          # Needed only for OIDC
             CESNET_OIDC_TEST_SITE=""        # Needed only for OIDC
 
             # The url of logins form of used IdP
             # For example: https://idp2.ics.muni.cz/idp/Authn/UserPassword
+            AAI_LOGIN_SITE=""
             MUNI_LOGIN_SITE=""
             CESNET_LOGIN_SITE=""
 
             # Fill in logins
+            AAI_LOGIN=""
             MUNI_LOGIN=""
             CESNET_LOGIN=""
 
