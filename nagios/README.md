@@ -139,22 +139,15 @@ The main script gradually try to sign in via AAI Playground IdP, MUNI IdP and CE
     * proxy_idp_auth_test_script/saml_auth_test_muni_active.sh
     * proxy_idp_auth_test_script/oidc_auth_test_cesnet_active.sh
     * proxy_idp_auth_test_script/oidc_auth_test_muni_active.sh
+* Requirements:
+    * Configuration file - Example configuration file: `proxy_idp_auth_test_active_config.sh`
 * How to run these scripts:
     * Params:
-        * 1 - The url of tested SP via MU account
-        * 2 - The url of login form of MU IdP
-        * 3 - MU Login
-        * 4 - MU Password
-        * 5 - The url of tested SP via CESNET account
-        * 6 - The url of login form of CESNET IdP
-        * 7 - CESNET Login
-        * 8 - CESNET Password
-        * 9 - Roundtrip time (in seconds) - The standard login time. After this time the return value can be changed to WARNING state
-        * 10 - Timeout time (in seconds) - After this time the helper script timeouts
+        * 1 - Path to the configuration
     * Examples:
         <pre>
-        ./proxy_idp_auth_test_active_saml.sh "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=muni" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=cesnet" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" 10 40
-        ./proxy_idp_auth_test_active_oidc.sh "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=muni" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" "https://aai-playground.ics.muni.cz/simplesaml/nagios_check.php?proxy_idp=cesnet&authenticate=cesnet" "https://idp2.ics.muni.cz/idp/Authn/UserPassword" "login" "passwd" 15 40
+        ./proxy_idp_auth_test_active_saml.sh "proxy_idp_auth_test_active_config.sh"
+        ./proxy_idp_auth_test_active_oidc.sh "proxy_idp_auth_test_active_config.sh"
         </pre>
 
 ### mariadb_replication_check.sh

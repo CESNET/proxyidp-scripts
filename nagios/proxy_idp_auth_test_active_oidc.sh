@@ -4,29 +4,32 @@
 # Exit statuses indicate problem and are suitable for usage in Nagios.
 # @author Pavel Vyskocil <Pavel.Vyskocil@cesnet.cz>
 
+FILENAME=$1
+
+if [ "$#" -ne 1 ]; then
+    echo "You must enter exactly 1 command line arguments!"
+    echo "The first param must be the file with the configuration!"
+    exit 127
+fi
+
+if [[ ! -f ${FILENAME} ]]; then
+    echo "File ${FILENAME} doesn't exist."
+    echo "The first param must be the file with the configuration!"
+    exit 127
+fi
+
+source "${FILENAME}"
+
+
 DIR="${0%/*}"
 SCRIPT_DIR="${DIR}/proxy_idp_auth_test_script"
 
 BASENAME=$(basename "$0")
 
-AAI_TEST_SITE=${1}
-AAI_LOGIN_SITE=${2}
-AAI_LOGIN=${3}
-AAI_PASSWORD=${4}
-MUNI_TEST_SITE=${5}
-MUNI_LOGIN_SITE=${6}
-MUNI_LOGIN=${7}
-MUNI_PASSWORD=${8}
-CESNET_TEST_SITE=${9}
-CESNET_LOGIN_SITE=${10}
-CESNET_LOGIN=${11}
-CESNET_PASSWORD=${12}
-WARNING_TIME=${13}
-TIMEOUT_TIME=${14}
 
-AAI_LOGIN_CMD="$SCRIPT_DIR/oidc_auth_test_aai_active.sh ${AAI_TEST_SITE} ${AAI_LOGIN_SITE} ${AAI_LOGIN} ${AAI_PASSWORD}"
-MUNI_LOGIN_CMD="$SCRIPT_DIR/oidc_auth_test_muni_active.sh ${MUNI_TEST_SITE} ${MUNI_LOGIN_SITE} ${MUNI_LOGIN} ${MUNI_PASSWORD}"
-CESNET_LOGIN_CMD="$SCRIPT_DIR/oidc_auth_test_cesnet_active.sh ${CESNET_TEST_SITE} ${CESNET_LOGIN_SITE} ${CESNET_LOGIN} ${CESNET_PASSWORD}"
+AAI_LOGIN_CMD="$SCRIPT_DIR/oidc_auth_test_aai_active.sh ${AAI_OIDC_TEST_SITE} ${AAI_LOGIN_SITE} ${AAI_LOGIN} ${AAI_PASSWORD}"
+MUNI_LOGIN_CMD="$SCRIPT_DIR/oidc_auth_test_muni_active.sh ${MUNI_OIDC_TEST_SITE} ${MUNI_LOGIN_SITE} ${MUNI_LOGIN} ${MUNI_PASSWORD}"
+CESNET_LOGIN_CMD="$SCRIPT_DIR/oidc_auth_test_cesnet_active.sh ${CESNET_OIDC_TEST_SITE} ${CESNET_LOGIN_SITE} ${CESNET_LOGIN} ${CESNET_PASSWORD}"
 
 
 # Test sign in with AAI Playground IdP
