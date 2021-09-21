@@ -15,3 +15,9 @@ All nagios scripts are located under `nagios` directory.
 
 ### separate_oidc_logs.py
 * Script for remove all logs from test accounts from OIDC logs
+
+### metadata_expiration.py
+* This script checks whether there are some metadata close to expiration date
+
+* Params:
+  * 1 - url to a page which prints a time when expires the metadata closest to expiration
