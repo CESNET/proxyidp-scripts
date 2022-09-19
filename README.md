@@ -1,5 +1,7 @@
 # ProxyIdP scripts
 
+**REPOSITORY HAS BEEN MOVED TO: https://gitlab.ics.muni.cz/perun-proxy-aai/proxyidp-scripts**
+
 All nagios scripts are located under `nagios` directory.
 
 ## List scripts
